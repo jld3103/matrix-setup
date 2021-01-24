@@ -1,0 +1,29 @@
+services:
+
+  synapse:
+    container_name: synapse
+    image: matrixdotorg/synapse:latest
+    restart: on-failure
+    volumes:
+      - ./data/synapse:/data
+    ports:
+      - 8008:8008
+      - 8448:8448
+
+  element:
+    container_name: element
+    image: vectorim/element-web:latest
+    restart: on-failure
+    volumes:
+      - ./data/element/config.json:/app/config.json
+    ports:
+      - 8080:80
+
+  telegram:
+    container_name: telegram
+    image: dock.mau.dev/tulir/mautrix-telegram:latest
+    restart: on-failure
+    volumes:
+      - ./data/telegram:/data
+    ports:
+      - 29317:29317
