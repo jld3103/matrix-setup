@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   synapse:
@@ -11,7 +13,7 @@ services:
       - 8448:8448
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8008" ]
-      interval: 1s
+      interval: 10s
       timeout: 10s
       retries: 10
 
@@ -50,3 +52,39 @@ services:
     depends_on:
       synapse:
         condition: service_healthy
+
+  signal:
+    container_name: signal
+    image: dock.mau.dev/tulir/mautrix-signal
+    restart: on-failure
+    volumes:
+      - ./data/signal:/data
+      - ./data/signal:/signald
+    depends_on:
+      synapse:
+        condition: service_healthy
+      signal_db:
+        condition: service_healthy
+
+  signald:
+    container_name: signald
+    image: docker.io/finn/signald
+    restart: on-failure
+    volumes:
+      - ./data/signal:/signald
+
+  signal_db:
+    container_name: signal-db
+    image: postgres:13-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: mautrixsignal
+      POSTGRES_DATABASE: mautrixsignal
+      POSTGRES_PASSWORD: foobar
+    volumes:
+      - ./data/signal/db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U mautrixsignal" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10

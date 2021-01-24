@@ -7,6 +7,7 @@ TELEGRAM_ENABLE="$(yq -r .telegram_enable config.yaml)"
 TELEGRAM_API_ID="$(yq -r .telegram_api_id config.yaml)"
 TELEGRAM_API_HASH="$(yq -r .telegram_api_hash config.yaml)"
 WHATSAPP_ENABLE="$(yq -r .whatsapp_enable config.yaml)"
+SIGNAL_ENABLE="$(yq -r .signal_enable config.yaml)"
 
 echo "Setting up Synapse"
 
@@ -106,6 +107,39 @@ if [ "$WHATSAPP_ENABLE" == "true" ]; then
   sudo chmod 755 data/whatsapp/registration.yaml
   sudo cp data/whatsapp/registration.yaml data/synapse/whatsapp-registration.yaml
   REGISTRATION_FILES+=(whatsapp-registration.yaml)
+fi
+
+if [ "$SIGNAL_ENABLE" == "true" ]; then
+  echo "Setting up Signal"
+
+  mkdir -p data/signal data/signal/db
+  id=$(docker run --rm -d \
+    -v "$(pwd)"/data/signal:/signald:z \
+    finn/signald:latest)
+  docker run --rm \
+    -v "$(pwd)"/data/signal:/data:z \
+    -v "$(pwd)"/data/signal:/signald:z \
+    dock.mau.dev/tulir/mautrix-signal:latest
+  sudo sed -i "s|    address: https://example.com|    address: http://synapse:8008|g" data/signal/config.yaml
+  sudo sed -i "s|    domain: example.com|    domain: $SYNAPSE_SERVER_NAME|g" data/signal/config.yaml
+  sudo sed -i "s|    address: http://localhost:29328|    address: http://signal:29328|g" data/signal/config.yaml
+  sudo sed -i "s|    database: postgres:\/\/username:password@hostname\/db|    database: postgres:\/\/mautrixsignal:foobar@signal-db\/mautrixsignal|g" data/signal/config.yaml
+  sudo sed -i "s|    ephemeral_events: false|    ephemeral_events: true|g" data/signal/config.yaml
+  sudo sed -i "s|    socket_path: \/var\/run\/signald\/signald.sock|    socket_path: \/signald\/signald.sock|g" data/signal/config.yaml
+  sudo sed -i "s|    outgoing_attachment_dir: \/tmp|    outgoing_attachment_dir: \/signald\/attachments|g" data/signal/config.yaml
+  sudo sed -i "s|    avatar_dir: ~\/\.config\/signald\/avatars|    avatar_dir: \/signald\/avatars|g" data/signal/config.yaml
+  sudo sed -i "s|    data_dir: ~\/\.config\/signald\/data|    data_dir: \/signald\/data|g" data/signal/config.yaml
+  sudo sed -i "s|    allow_contact_list_name_updates: false|    allow_contact_list_name_updates: true|g" data/signal/config.yaml
+  sudo sed -i "s|    sync_with_custom_puppets: true|    sync_with_custom_puppets: false|g" data/signal/config.yaml
+  sudo sed -i "s|        \"example.com\": \"user\"||g" data/signal/config.yaml
+  sudo sed -i "s|        \"@admin:example.com\": \"admin\"|        \"$SYNAPSE_SERVER_NAME\": \"admin\"|g" data/signal/config.yaml
+  docker run --rm \
+    -v "$(pwd)"/data/signal:/data:z \
+    -v "$(pwd)"/data/signal:/signald:z \
+    dock.mau.dev/tulir/mautrix-signal:latest
+  docker stop "$id"
+  sudo cp data/signal/registration.yaml data/synapse/signal-registration.yaml
+  REGISTRATION_FILES+=(signal-registration.yaml)
 fi
 
 if [ "${#REGISTRATION_FILES[@]}" -ne 0 ]; then

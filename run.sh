@@ -12,4 +12,12 @@ if [ "$WHATSAPP_ENABLE" == "true" ]; then
   SERVICES+=(whatsapp)
 fi
 
-docker-compose up "$(printf " %s" "${SERVICES[@]}")"
+SIGNAL_ENABLE="$(yq -r .signal_enable config.yaml)"
+if [ "$SIGNAL_ENABLE" == "true" ]; then
+  SERVICES+=(signal)
+  SERVICES+=(signald)
+  SERVICES+=(signal_db)
+fi
+
+# shellcheck disable=SC2046
+docker-compose up $(printf " %s" "${SERVICES[@]}")

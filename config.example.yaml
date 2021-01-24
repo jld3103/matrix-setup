@@ -4,3 +4,4 @@ telegram_enable: true
 telegram_api_id: "12345"
 telegram_api_hash: "tjyd5yge35lbodk1xwzw2jstp90k55qz"
 whatsapp_enable: true
+signal_enable: true
