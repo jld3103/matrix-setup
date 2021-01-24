@@ -6,6 +6,7 @@ SYNAPSE_SEVER_ADDRESS="$(yq -r .synapse_server_address config.yaml)"
 TELEGRAM_ENABLE="$(yq -r .telegram_enable config.yaml)"
 TELEGRAM_API_ID="$(yq -r .telegram_api_id config.yaml)"
 TELEGRAM_API_HASH="$(yq -r .telegram_api_hash config.yaml)"
+WHATSAPP_ENABLE="$(yq -r .whatsapp_enable config.yaml)"
 
 echo "Setting up Synapse"
 
@@ -69,9 +70,6 @@ if [ "$TELEGRAM_ENABLE" == "true" ]; then
   sudo sed -i "s|    address: http://localhost:29317|    address: http://telegram:29317|g" data/telegram/config.yaml
   sudo sed -i "s|    ephemeral_events: false|    ephemeral_events: true|g" data/telegram/config.yaml
   sudo sed -i "s|    sync_with_custom_puppets: true|    sync_with_custom_puppets: false|g" data/telegram/config.yaml
-  #  sudo sed -i "s|    sync_create_limit: 30|    sync_create_limit: 0|g" data/telegram/config.yaml
-  sudo sed -i "s|    sync_direct_chats: false|    sync_direct_chats: true|g" data/telegram/config.yaml
-  #  sudo sed -i "s|        initial_limit: 0|        initial_limit: -1|g" data/telegram/config.yaml
   sudo sed -i "s|        disable_notifications: false|        disable_notifications: true|g" data/telegram/config.yaml
   sudo sed -i "s|        \"\*\": \"relaybot\"||g" data/telegram/config.yaml
   sudo sed -i "s|        \"public.example.com\": \"user\"||g" data/telegram/config.yaml
@@ -82,8 +80,32 @@ if [ "$TELEGRAM_ENABLE" == "true" ]; then
   docker run --rm \
     -v "$(pwd)"/data/telegram:/data:z \
     dock.mau.dev/tulir/mautrix-telegram:latest
+  sudo chmod 755 data/telegram/registration.yaml
   sudo cp data/telegram/registration.yaml data/synapse/telegram-registration.yaml
   REGISTRATION_FILES+=(telegram-registration.yaml)
+fi
+
+if [ "$WHATSAPP_ENABLE" == "true" ]; then
+  echo "Setting up WhatsApp"
+
+  mkdir -p data/whatsapp
+  docker run --rm \
+    -v "$(pwd)"/data/whatsapp:/data:z \
+    dock.mau.dev/tulir/mautrix-whatsapp:latest
+  sudo sed -i "s|    address: https://example.com|    address: http://synapse:8008|g" data/whatsapp/config.yaml
+  sudo sed -i "s|    domain: example.com|    domain: $SYNAPSE_SERVER_NAME|g" data/whatsapp/config.yaml
+  sudo sed -i "s|    address: http://localhost:29318|    address: http://whatsapp:29318|g" data/whatsapp/config.yaml
+  sudo sed -i "s|    displayname_template: \"{{if .Notify}}{{.Notify}}{{else}}{{.Jid}}{{end}} (WA)\"|    displayname_template: \"{{if .Short}}{{.Short}}{{else if .Name}}{{.Name}}{{else if .Notify}}{{.Notify}}{{else}}{{.Jid}}{{end}} (WhatsApp)\"|g" data/whatsapp/config.yaml
+  sudo sed -i "s|    initial_history_disable_notifications: false|    initial_history_disable_notifications: true|g" data/whatsapp/config.yaml
+  sudo sed -i "s|        \"\*\": relaybot||g" data/whatsapp/config.yaml
+  sudo sed -i "s|        \"example.com\": user||g" data/whatsapp/config.yaml
+  sudo sed -i "s|        \"@admin:example.com\": admin|        \"$SYNAPSE_SERVER_NAME\": \"admin\"|g" data/whatsapp/config.yaml
+  docker run --rm \
+    -v "$(pwd)"/data/whatsapp:/data:z \
+    dock.mau.dev/tulir/mautrix-whatsapp:latest
+  sudo chmod 755 data/whatsapp/registration.yaml
+  sudo cp data/whatsapp/registration.yaml data/synapse/whatsapp-registration.yaml
+  REGISTRATION_FILES+=(whatsapp-registration.yaml)
 fi
 
 if [ "${#REGISTRATION_FILES[@]}" -ne 0 ]; then

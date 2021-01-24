@@ -20,7 +20,7 @@ to set up all configs. Then run
 to start all services and run
 
 ```bash
-docker exec -it synapse register_new_matrix_user -c /data/homeserver.yaml http://localhost:8008
+docker exec -it synapse register_new_matrix_user -a -c /data/homeserver.yaml http://localhost:8008
 ```
 
 to create your user account on the homeserver.

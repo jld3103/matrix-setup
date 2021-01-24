@@ -9,6 +9,11 @@ services:
     ports:
       - 8008:8008
       - 8448:8448
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8008" ]
+      interval: 1s
+      timeout: 10s
+      retries: 10
 
   element:
     container_name: element
@@ -18,6 +23,9 @@ services:
       - ./data/element/config.json:/app/config.json
     ports:
       - 8080:80
+    depends_on:
+      synapse:
+        condition: service_healthy
 
   telegram:
     container_name: telegram
@@ -27,3 +35,18 @@ services:
       - ./data/telegram:/data
     ports:
       - 29317:29317
+    depends_on:
+      synapse:
+        condition: service_healthy
+
+  whatsapp:
+    container_name: whatsapp
+    image: dock.mau.dev/tulir/mautrix-whatsapp:latest
+    restart: on-failure
+    volumes:
+      - ./data/whatsapp:/data
+    ports:
+      - 29318:29318
+    depends_on:
+      synapse:
+        condition: service_healthy
