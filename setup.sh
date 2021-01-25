@@ -26,6 +26,8 @@ docker run --rm \
   -e SYNAPSE_SERVER_NAME="$SYNAPSE_SERVER_NAME" \
   -e SYNAPSE_REPORT_STATS=no \
   matrixdotorg/synapse:latest generate
+SHARED_SECRET=$(pwgen -s 128 1)
+sudo sed -i "s|password_providers:|password_providers:\n  - module: \"shared_secret_authenticator.SharedSecretAuthenticator\"\n    config:\n      sharedSecret: \"$SHARED_SECRET\"\n|g" data/synapse/homeserver.yaml
 
 echo "Setting up Element"
 
@@ -71,6 +73,7 @@ if [ "$TELEGRAM_ENABLE" == "true" ]; then
   sudo sed -i "s|    address: http://localhost:29317|    address: http://telegram:29317|g" data/telegram/config.yaml
   sudo sed -i "s|    ephemeral_events: false|    ephemeral_events: true|g" data/telegram/config.yaml
   sudo sed -i "s|    sync_with_custom_puppets: true|    sync_with_custom_puppets: false|g" data/telegram/config.yaml
+  sudo sed -i "s|        example.com: foobar|        $SYNAPSE_SERVER_NAME: $SHARED_SECRET|g" data/telegram/config.yaml
   sudo sed -i "s|        disable_notifications: false|        disable_notifications: true|g" data/telegram/config.yaml
   sudo sed -i "s|        \"\*\": \"relaybot\"||g" data/telegram/config.yaml
   sudo sed -i "s|        \"public.example.com\": \"user\"||g" data/telegram/config.yaml
@@ -98,6 +101,7 @@ if [ "$WHATSAPP_ENABLE" == "true" ]; then
   sudo sed -i "s|    address: http://localhost:29318|    address: http://whatsapp:29318|g" data/whatsapp/config.yaml
   sudo sed -i "s|    displayname_template: \"{{if .Notify}}{{.Notify}}{{else}}{{.Jid}}{{end}} (WA)\"|    displayname_template: \"{{if .Short}}{{.Short}}{{else if .Name}}{{.Name}}{{else if .Notify}}{{.Notify}}{{else}}{{.Jid}}{{end}} (WhatsApp)\"|g" data/whatsapp/config.yaml
   sudo sed -i "s|    initial_history_disable_notifications: false|    initial_history_disable_notifications: true|g" data/whatsapp/config.yaml
+  sudo sed -i "s|    login_shared_secret: null|    login_shared_secret: \"$SHARED_SECRET\"|g" data/whatsapp/config.yaml
   sudo sed -i "s|        \"\*\": relaybot||g" data/whatsapp/config.yaml
   sudo sed -i "s|        \"example.com\": user||g" data/whatsapp/config.yaml
   sudo sed -i "s|        \"@admin:example.com\": admin|        \"$SYNAPSE_SERVER_NAME\": \"admin\"|g" data/whatsapp/config.yaml
@@ -131,6 +135,7 @@ if [ "$SIGNAL_ENABLE" == "true" ]; then
   sudo sed -i "s|    data_dir: ~\/\.config\/signald\/data|    data_dir: \/signald\/data|g" data/signal/config.yaml
   sudo sed -i "s|    allow_contact_list_name_updates: false|    allow_contact_list_name_updates: true|g" data/signal/config.yaml
   sudo sed -i "s|    sync_with_custom_puppets: true|    sync_with_custom_puppets: false|g" data/signal/config.yaml
+  sudo sed -i "s|        example.com: foo|        $SYNAPSE_SERVER_NAME: $SHARED_SECRET|g" data/signal/config.yaml
   sudo sed -i "s|        \"example.com\": \"user\"||g" data/signal/config.yaml
   sudo sed -i "s|        \"@admin:example.com\": \"admin\"|        \"$SYNAPSE_SERVER_NAME\": \"admin\"|g" data/signal/config.yaml
   docker run --rm \

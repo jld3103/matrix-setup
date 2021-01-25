@@ -8,6 +8,7 @@ services:
     restart: on-failure
     volumes:
       - ./data/synapse:/data
+      - ./shared-secret-auth/shared_secret_authenticator.py:/usr/local/lib/python3.8/site-packages/shared_secret_authenticator.py
     ports:
       - 8008:8008
       - 8448:8448

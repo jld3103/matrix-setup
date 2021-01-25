@@ -1,0 +1,3 @@
+[submodule "shared-secret-auth"]
+	path = shared-secret-auth
+	url = https://github.com/devture/matrix-synapse-shared-secret-auth

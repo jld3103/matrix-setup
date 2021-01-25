@@ -8,6 +8,7 @@ Copy the `config.example.yaml` file to `config.yaml` and fill in all the details
 Then run
 
 ```bash
+./update.sh
 ./setup.sh
 ```
 
