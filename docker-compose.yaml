@@ -69,7 +69,7 @@ services:
 
   signald:
     container_name: signald
-    image: docker.io/finn/signald
+    image: finn/signald:latest
     restart: on-failure
     volumes:
       - ./data/signal:/signald
@@ -89,3 +89,13 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+
+  discord:
+    container_name: discord
+    image: sorunome/mx-puppet-discord:latest
+    restart: on-failure
+    volumes:
+      - ./data/discord:/data
+    depends_on:
+      synapse:
+        condition: service_healthy

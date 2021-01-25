@@ -19,5 +19,10 @@ if [ "$SIGNAL_ENABLE" == "true" ]; then
   SERVICES+=(signal_db)
 fi
 
+DISCORD_ENABLE="$(yq -r .discord_enable config.yaml)"
+if [ "$DISCORD_ENABLE" == "true" ]; then
+  SERVICES+=(discord)
+fi
+
 # shellcheck disable=SC2046
 docker-compose up $(printf " %s" "${SERVICES[@]}")

@@ -8,6 +8,7 @@ TELEGRAM_API_ID="$(yq -r .telegram_api_id config.yaml)"
 TELEGRAM_API_HASH="$(yq -r .telegram_api_hash config.yaml)"
 WHATSAPP_ENABLE="$(yq -r .whatsapp_enable config.yaml)"
 SIGNAL_ENABLE="$(yq -r .signal_enable config.yaml)"
+DISCORD_ENABLE="$(yq -r .discord_enable config.yaml)"
 
 echo "Setting up Synapse"
 
@@ -145,6 +146,51 @@ if [ "$SIGNAL_ENABLE" == "true" ]; then
   docker stop "$id"
   sudo cp data/signal/registration.yaml data/synapse/signal-registration.yaml
   REGISTRATION_FILES+=(signal-registration.yaml)
+fi
+
+if [ "$DISCORD_ENABLE" == "true" ]; then
+  echo "Setting up Discord"
+
+  mkdir -p data/discord
+  cat >data/discord/config.yaml <<EOF
+bridge:
+  port: 8434
+  bindAddress: 0.0.0.0
+  domain: $SYNAPSE_SERVER_NAME
+  homeserverUrl: http://synapse:8008
+  loginSharedSecretMap:
+    $SYNAPSE_SERVER_NAME: $SHARED_SECRET
+  displayname: Discord Puppet Bridge
+  enableGroupSync: true
+presence:
+  enabled: true
+  interval: 10000
+provisioning:
+  whitelist:
+    - "@.*:$SYNAPSE_SERVER_NAME"
+relay:
+  whitelist:
+    - "@.*:$SYNAPSE_SERVER_NAME"
+selfService:
+  whitelist:
+    - "@.*:$SYNAPSE_SERVER_NAME"
+namePatterns:
+  user: :name
+  userOverride: :displayname
+  room: :name
+  group: :name
+database:
+  filename: database.db
+limits:
+  maxAutojoinUsers: 100
+  roomUserAutojoinDelay: 100
+EOF
+  docker run --rm \
+    -v "$(pwd)"/data/discord:/data:z \
+    sorunome/mx-puppet-discord:latest
+  sudo sed -i "s|url: 'http://localhost:8434'|url: 'http://discord:8434'|g" data/discord/discord-registration.yaml
+  sudo cp data/discord/discord-registration.yaml data/synapse/discord-registration.yaml
+  REGISTRATION_FILES+=(discord-registration.yaml)
 fi
 
 if [ "${#REGISTRATION_FILES[@]}" -ne 0 ]; then
