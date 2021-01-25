@@ -1,6 +1,6 @@
 # matrix-setup
 
-My Matrix setup with Synapse as homeserver, mautrix-telegram, ...
+My Matrix setup with Synapse as homeserver, mautrix-telegram, mautrix-whatsapp, mautrix-signal, ...
 
 # Setup
 
