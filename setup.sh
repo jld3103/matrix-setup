@@ -12,7 +12,7 @@ function update_config() {
 }
 
 SYNAPSE_SERVER_NAME="$(yq -r .synapse_server_name config.yaml)"
-SYNAPSE_SEVER_ADDRESS="$(yq -r .synapse_server_address config.yaml)"
+SYNAPSE_SERVER_ADDRESS="$(yq -r .synapse_server_address config.yaml)"
 TELEGRAM_ENABLE="$(yq -r .telegram_enable config.yaml)"
 TELEGRAM_API_ID="$(yq -r .telegram_api_id config.yaml)"
 TELEGRAM_API_HASH="$(yq -r .telegram_api_hash config.yaml)"
@@ -25,7 +25,7 @@ if [ "$SYNAPSE_SERVER_NAME" == "" ] || [ "$SYNAPSE_SERVER_NAME" == "null" ]; the
   echo "Missing or empty synapse_server_name in config"
   exit 1
 fi
-if [ "$SYNAPSE_SEVER_ADDRESS" == "" ] || [ "$SYNAPSE_SEVER_ADDRESS" == "null" ]; then
+if [ "$SYNAPSE_SERVER_ADDRESS" == "" ] || [ "$SYNAPSE_SERVER_ADDRESS" == "null" ]; then
   echo "Missing or empty synapse_server_address in config"
   exit 1
 fi
@@ -46,7 +46,7 @@ cat >data/element/config.json <<EOF
 {
     "default_server_config": {
         "m.homeserver": {
-            "base_url": "$SYNAPSE_SEVER_ADDRESS",
+            "base_url": "$SYNAPSE_SERVER_ADDRESS",
             "server_name": "$SYNAPSE_SERVER_NAME"
         }
     },
