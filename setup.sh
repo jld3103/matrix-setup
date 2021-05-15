@@ -38,6 +38,7 @@ docker run --rm \
   matrixdotorg/synapse:latest generate
 SHARED_SECRET=$(pwgen -s 128 1)
 update_config "s|password_providers:|password_providers:\n  - module: \"shared_secret_authenticator.SharedSecretAuthenticator\"\n    config:\n      sharedSecret: \"$SHARED_SECRET\"\n|g" data/synapse/homeserver.yaml
+update_config "s|    filename: homeserver.log|    filename: /data/homeserver.log|g" "data/synapse/$SYNAPSE_SERVER_NAME.log.config"
 
 echo "Setting up Element"
 
